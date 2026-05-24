@@ -1,5 +1,202 @@
-<div id="xiejiahe">
-  <app-icon-git></app-icon-git>
+<div class="island-shell" id="xiejiahe">
+  <div class="atmosphere" aria-hidden="true">
+    <canvas #starfield class="starfield"></canvas>
+    <div class="nebula nebula-one"></div>
+    <div class="nebula nebula-two"></div>
+    <div class="horizon"></div>
+    <div class="scanlines"></div>
+  </div>
 
-  <router-outlet></router-outlet>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="桃花岛星河导航首页">
+      <span class="brand-mark">桃</span>
+      <span class="brand-copy">
+        <strong>桃花岛</strong>
+        <small>STARLIGHT PORTAL</small>
+      </span>
+    </a>
+    <nav class="top-actions" aria-label="快捷操作">
+      <button class="ghost-button" type="button" (click)="launchRandom()">随机漫游</button>
+      <a class="primary-button" href="#catalog">开启探索</a>
+    </nav>
+  </header>
+
+  <main class="portal">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span class="pulse-dot"></span>
+          桃花岛数字秘境已开启
+        </div>
+        <h1>
+          驶入
+          <span class="gradient-word">星河</span>
+          <br />
+          发现你的下一座岛
+        </h1>
+        <p class="intro">
+          一片会呼吸的导航宇宙，收录开发、设计、影音、学习与灵感站点。
+          在流光桃瓣之间，快速抵达你真正需要的地方。
+        </p>
+
+        <label class="search-box" aria-label="搜索导航站点">
+          <span class="search-icon"></span>
+          <input
+            type="search"
+            [value]="searchTerm"
+            (input)="search($event)"
+            placeholder="搜索站点、简介、分类或网址..."
+            autocomplete="off"
+          />
+          <button *ngIf="searchTerm" type="button" (click)="clearSearch()">清除</button>
+        </label>
+
+        <div class="hero-filters" aria-label="热门主题">
+          <button
+            type="button"
+            *ngFor="let section of sections.slice(0, 6)"
+            [class.active]="activeSection === section.title"
+            (click)="selectSection(section.title)"
+          >
+            {{ section.title }}
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-orbit" aria-hidden="true">
+        <div class="orbital-ring ring-a"></div>
+        <div class="orbital-ring ring-b"></div>
+        <div class="moon">
+          <span>桃</span>
+        </div>
+        <div class="satellite satellite-a">DEV</div>
+        <div class="satellite satellite-b">ART</div>
+        <div class="satellite satellite-c">IDEA</div>
+      </div>
+    </section>
+
+    <section class="metrics" aria-label="导航数据">
+      <article>
+        <strong>{{ totalLinks }}</strong>
+        <span>精选网址</span>
+      </article>
+      <article>
+        <strong>{{ sections.length }}</strong>
+        <span>探索主题</span>
+      </article>
+      <article>
+        <strong>{{ totalCollections }}</strong>
+        <span>内容星群</span>
+      </article>
+      <article class="live-metric">
+        <strong>{{ currentTime | date: 'HH:mm' }}</strong>
+        <span>岛上时间</span>
+      </article>
+    </section>
+
+    <section class="catalog" id="catalog">
+      <aside class="category-panel">
+        <div class="panel-label">航线坐标</div>
+        <button
+          type="button"
+          [class.active]="activeSection === allSections"
+          (click)="selectSection(allSections)"
+        >
+          <span>{{ allSections }}</span>
+          <small>{{ totalLinks }}</small>
+        </button>
+        <button
+          type="button"
+          *ngFor="let section of sections"
+          [class.active]="activeSection === section.title"
+          (click)="selectSection(section.title)"
+        >
+          <span>{{ section.title }}</span>
+          <small>{{ sectionCount(section.title) }}</small>
+        </button>
+      </aside>
+
+      <div class="destination-panel">
+        <div class="results-heading">
+          <div>
+            <p>当前航线</p>
+            <h2>{{ activeSection }} <span>{{ matchingCount }} 个站点</span></h2>
+          </div>
+          <button class="surprise" type="button" (click)="launchRandom()">遇见惊喜</button>
+        </div>
+
+        <div class="channels" *ngIf="channels.length > 1" aria-label="二级分类">
+          <button
+            type="button"
+            *ngFor="let channel of channels"
+            [class.active]="activeChannel === channel"
+            (click)="selectChannel(channel)"
+          >
+            {{ channel }}
+          </button>
+        </div>
+
+        <div class="site-grid" *ngIf="visibleLinks.length; else emptyState">
+          <article
+            class="site-card"
+            *ngFor="let site of visibleLinks; let i = index; trackBy: trackSite"
+            [style.--order]="i % 18"
+          >
+            <a class="site-main" [href]="site.url" target="_blank" rel="noopener noreferrer">
+              <div class="site-icon">
+                <span>{{ site.name.slice(0, 1) }}</span>
+                <img
+                  *ngIf="site.icon"
+                  [src]="site.icon"
+                  [alt]="site.name"
+                  loading="lazy"
+                  (error)="hideIcon($event)"
+                />
+              </div>
+              <div class="site-title">
+                <h3>{{ site.name }}</h3>
+                <span class="arrow">↗</span>
+              </div>
+              <p>{{ site.desc || '抵达新的灵感坐标。' }}</p>
+              <div class="site-path">{{ site.section }} / {{ site.channel }}</div>
+            </a>
+            <div class="mirrors" *ngIf="site.mirrors.length">
+              <a
+                *ngFor="let mirror of site.mirrors"
+                [href]="mirror.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ mirror.label }}
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #emptyState>
+          <div class="empty-state">
+            <span>✦</span>
+            <h3>这片星域暂时没有结果</h3>
+            <p>换一个关键词，或回到全部航线继续漫游。</p>
+            <button type="button" (click)="resetFilters()">查看全部网址</button>
+          </div>
+        </ng-template>
+
+        <button
+          class="load-more"
+          type="button"
+          *ngIf="matchingCount > visibleLinks.length"
+          (click)="showMore()"
+        >
+          展开更多坐标
+          <small>{{ visibleLinks.length }} / {{ matchingCount }}</small>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="portal-footer">
+    <span>TAOHUA DAO / 星河导航</span>
+    <p>在 {{ totalLinks }} 个目的地之间，持续发现新的灵感。</p>
+  </footer>
 </div>

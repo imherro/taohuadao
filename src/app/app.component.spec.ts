@@ -1,29 +1,36 @@
-import { TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
-import { AppComponent } from './app.component';
+import { CommonModule } from '@angular/common'
+import { ComponentFixture, TestBed } from '@angular/core/testing'
+import { AppComponent } from './app.component'
 
 describe('AppComponent', () => {
-  beforeEach(() => TestBed.configureTestingModule({
-    imports: [RouterTestingModule],
-    declarations: [AppComponent]
-  }));
+  let fixture: ComponentFixture<AppComponent>
 
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [CommonModule],
+      declarations: [AppComponent]
+    })
+    fixture = TestBed.createComponent(AppComponent)
+  })
 
-  it(`should have as title 'nav2'`, () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.componentInstance;
-    expect(app.title).toEqual('nav2');
-  });
+  it('creates the immersive portal with retained destinations', () => {
+    const app = fixture.componentInstance
+    expect(app).toBeTruthy()
+    expect(app.totalLinks).toBeGreaterThan(800)
+  })
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('.content span')?.textContent).toContain('nav2 app is running!');
-  });
-});
+  it('filters existing navigation destinations by keyword', () => {
+    const app = fixture.componentInstance
+    app.search({
+      target: { value: 'github' }
+    } as unknown as Event)
+    expect(app.matchingCount).toBeGreaterThan(0)
+    expect(app.visibleLinks.every(site => JSON.stringify(site).toLowerCase().includes('github'))).toBeTrue()
+  })
+
+  it('renders the island heading', () => {
+    fixture.detectChanges()
+    const element = fixture.nativeElement as HTMLElement
+    expect(element.querySelector('h1')?.textContent).toContain('星河')
+  })
+})
