@@ -28,9 +28,9 @@ describe('AppComponent', () => {
     expect(app.visibleLinks.every(site => JSON.stringify(site).toLowerCase().includes('github'))).toBeTrue()
   })
 
-  it('renders the island heading', () => {
+  it('renders the peach blossom island heading', () => {
     fixture.detectChanges()
     const element = fixture.nativeElement as HTMLElement
-    expect(element.querySelector('h1')?.textContent).toContain('星河')
+    expect(element.querySelector('h1')?.textContent).toContain('桃花')
   })
 })

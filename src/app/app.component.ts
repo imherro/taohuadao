@@ -33,25 +33,27 @@ interface PortalLink {
   mirrors: LinkMirror[]
 }
 
-interface Spark {
-  x: number
-  y: number
-  radius: number
-  opacity: number
-  drift: number
-  phase: number
-}
-
 interface Petal {
   x: number
   y: number
   size: number
   speed: number
+  sideSpeed: number
   sway: number
   phase: number
   rotation: number
   spin: number
   opacity: number
+  foreground: boolean
+}
+
+interface Glimmer {
+  x: number
+  y: number
+  width: number
+  opacity: number
+  speed: number
+  phase: number
 }
 
 @Component({
@@ -60,10 +62,10 @@ interface Petal {
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('starfield') starfield?: ElementRef<HTMLCanvasElement>
+  @ViewChild('sceneCanvas') sceneCanvas?: ElementRef<HTMLCanvasElement>
 
-  readonly allSections = '全部星域'
-  readonly allChannels = '全部坐标'
+  readonly allSections = '全部花径'
+  readonly allChannels = '全部藏点'
   readonly sections: PortalSection[] = (database as any).default
   readonly links: PortalLink[] = this.flattenNavigation(this.sections)
   readonly totalLinks = this.links.length
@@ -84,9 +86,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   private clockTimer = 0
   private canvasWidth = 0
   private canvasHeight = 0
-  private sparks: Spark[] = []
+  private glimmers: Glimmer[] = []
   private petals: Petal[] = []
   private reducedMotion = false
+  private lastPetalDrop = 0
 
   constructor() {
     this.applyFilters()
@@ -127,11 +130,23 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   @HostListener('document:pointermove', ['$event'])
   trackLight(event: PointerEvent): void {
-    if (this.reducedMotion) return
     const x = `${Math.round((event.clientX / window.innerWidth) * 100)}%`
     const y = `${Math.round((event.clientY / window.innerHeight) * 100)}%`
     document.documentElement.style.setProperty('--cursor-x', x)
     document.documentElement.style.setProperty('--cursor-y', y)
+  }
+
+  releasePetals(event: PointerEvent): void {
+    if (this.reducedMotion || performance.now() - this.lastPetalDrop < 55) return
+    this.lastPetalDrop = performance.now()
+
+    const amount = Math.random() > 0.58 ? 2 : 1
+    for (let index = 0; index < amount; index += 1) {
+      this.petals.push(this.createPetal(false, event.clientX, event.clientY, true))
+    }
+    if (this.petals.length > 82) {
+      this.petals.splice(0, this.petals.length - 82)
+    }
   }
 
   search(event: Event): void {
@@ -238,14 +253,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         site.collection,
         ...site.mirrors.map(mirror => `${mirror.label} ${mirror.url}`)
       ].join(' ').toLocaleLowerCase()
-      const matchesSearch = !keyword || haystack.includes(keyword)
-      return inSection && inChannel && matchesSearch
+      return inSection && inChannel && (!keyword || haystack.includes(keyword))
     })
     this.visibleLinks = this.filteredLinks.slice(0, this.visibleLimit)
   }
 
   private prepareScene(): void {
-    const canvas = this.starfield?.nativeElement
+    const canvas = this.sceneCanvas?.nativeElement
     if (!canvas) return
 
     const ratio = Math.min(window.devicePixelRatio || 1, 2)
@@ -260,14 +274,14 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     if (!context) return
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
 
-    const sparkCount = this.canvasWidth < 720 ? 32 : 72
-    const petalCount = this.canvasWidth < 720 ? 10 : 22
-    this.sparks = Array.from({ length: sparkCount }, () => ({
+    const glimmerCount = this.canvasWidth < 720 ? 15 : 34
+    const petalCount = this.canvasWidth < 720 ? 9 : 17
+    this.glimmers = Array.from({ length: glimmerCount }, () => ({
       x: Math.random() * this.canvasWidth,
-      y: Math.random() * this.canvasHeight,
-      radius: Math.random() * 1.6 + 0.35,
-      opacity: Math.random() * 0.55 + 0.25,
-      drift: Math.random() * 0.15 + 0.02,
+      y: this.canvasHeight * (0.49 + Math.random() * 0.47),
+      width: Math.random() * 74 + 18,
+      opacity: Math.random() * 0.19 + 0.06,
+      speed: Math.random() * 0.3 + 0.08,
       phase: Math.random() * Math.PI * 2
     }))
     this.petals = Array.from({ length: petalCount }, () => this.createPetal(true))
@@ -280,53 +294,67 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   private paintScene(time: number): void {
-    const canvas = this.starfield?.nativeElement
-    const context = canvas?.getContext('2d')
+    const context = this.sceneCanvas?.nativeElement.getContext('2d')
     if (!context) return
 
     context.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
     const tick = time / 1000
 
-    this.sparks.forEach(spark => {
-      if (!this.reducedMotion) {
-        spark.y -= spark.drift
-        if (spark.y < -4) spark.y = this.canvasHeight + 4
-      }
-      const shimmer = spark.opacity + Math.sin(tick * 1.7 + spark.phase) * 0.18
+    this.glimmers.forEach(glimmer => {
+      const drift = Math.sin(tick * glimmer.speed + glimmer.phase) * 30
+      const pulse = glimmer.opacity + Math.sin(tick * 1.1 + glimmer.phase) * 0.04
+      const gradient = context.createLinearGradient(
+        glimmer.x + drift,
+        glimmer.y,
+        glimmer.x + drift + glimmer.width,
+        glimmer.y
+      )
+      gradient.addColorStop(0, 'rgba(255, 255, 239, 0)')
+      gradient.addColorStop(0.48, `rgba(255, 253, 225, ${Math.max(pulse, 0.03)})`)
+      gradient.addColorStop(1, 'rgba(255, 255, 239, 0)')
+      context.strokeStyle = gradient
+      context.lineWidth = glimmer.width > 54 ? 1 : 0.6
       context.beginPath()
-      context.fillStyle = `rgba(255, 223, 203, ${Math.max(shimmer, 0.08)})`
-      context.shadowBlur = 12
-      context.shadowColor = 'rgba(255, 139, 168, .72)'
-      context.arc(spark.x, spark.y, spark.radius, 0, Math.PI * 2)
-      context.fill()
+      context.moveTo(glimmer.x + drift, glimmer.y)
+      context.quadraticCurveTo(
+        glimmer.x + drift + glimmer.width / 2,
+        glimmer.y + 2,
+        glimmer.x + drift + glimmer.width,
+        glimmer.y
+      )
+      context.stroke()
     })
 
     this.petals.forEach((petal, index) => {
-      if (!this.reducedMotion) {
-        petal.y += petal.speed
-        petal.x += Math.sin(tick + petal.phase) * petal.sway
-        petal.rotation += petal.spin
-        if (petal.y > this.canvasHeight + 32 || petal.x > this.canvasWidth + 45) {
-          this.petals[index] = this.createPetal(false)
-          petal = this.petals[index]
-        }
+      petal.y += petal.speed
+      petal.x += petal.sideSpeed + Math.sin(tick * 2 + petal.phase) * petal.sway
+      petal.rotation += petal.spin
+      if (petal.y > this.canvasHeight + 35 || petal.x > this.canvasWidth + 48 || petal.x < -48) {
+        this.petals[index] = this.createPetal(false)
+        return
       }
       this.drawPetal(context, petal)
     })
-    context.shadowBlur = 0
   }
 
-  private createPetal(initial: boolean): Petal {
+  private createPetal(
+    initial: boolean,
+    x = Math.random() * (this.canvasWidth + 80) - 40,
+    y = -30,
+    foreground = false
+  ): Petal {
     return {
-      x: Math.random() * (this.canvasWidth + 80) - 40,
-      y: initial ? Math.random() * this.canvasHeight : -30,
-      size: Math.random() * 8 + 6,
-      speed: Math.random() * 0.45 + 0.18,
-      sway: Math.random() * 0.4 + 0.08,
+      x: foreground ? x + (Math.random() - 0.5) * 24 : x,
+      y: foreground ? y + (Math.random() - 0.5) * 14 : (initial ? Math.random() * this.canvasHeight : y),
+      size: (foreground ? 7 : 4) + Math.random() * (foreground ? 8 : 7),
+      speed: (foreground ? 0.82 : 0.22) + Math.random() * (foreground ? 1.1 : 0.5),
+      sideSpeed: (Math.random() - 0.38) * (foreground ? 0.9 : 0.35),
+      sway: Math.random() * (foreground ? 0.65 : 0.38) + 0.1,
       phase: Math.random() * Math.PI * 2,
       rotation: Math.random() * Math.PI * 2,
-      spin: (Math.random() - 0.5) * 0.012,
-      opacity: Math.random() * 0.35 + 0.2
+      spin: (Math.random() - 0.5) * (foreground ? 0.045 : 0.018),
+      opacity: (foreground ? 0.68 : 0.3) + Math.random() * (foreground ? 0.24 : 0.26),
+      foreground
     }
   }
 
@@ -336,11 +364,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     context.rotate(petal.rotation)
     context.beginPath()
     context.moveTo(0, -petal.size)
-    context.bezierCurveTo(petal.size, -petal.size * 0.45, petal.size, petal.size * 0.72, 0, petal.size)
-    context.bezierCurveTo(-petal.size * 0.85, petal.size * 0.42, -petal.size * 0.78, -petal.size * 0.48, 0, -petal.size)
-    context.fillStyle = `rgba(255, 126, 167, ${petal.opacity})`
-    context.shadowBlur = 16
-    context.shadowColor = 'rgba(255, 98, 154, .45)'
+    context.bezierCurveTo(petal.size * 1.03, -petal.size * 0.48, petal.size * 0.84, petal.size * 0.76, 0, petal.size)
+    context.bezierCurveTo(-petal.size * 0.87, petal.size * 0.44, -petal.size * 0.95, -petal.size * 0.43, 0, -petal.size)
+    context.fillStyle = `rgba(255, ${petal.foreground ? 137 : 164}, ${petal.foreground ? 174 : 193}, ${petal.opacity})`
+    context.shadowBlur = petal.foreground ? 10 : 5
+    context.shadowColor = 'rgba(223, 79, 116, .26)'
     context.fill()
     context.restore()
   }

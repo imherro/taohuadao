@@ -1,23 +1,26 @@
 <div class="island-shell" id="xiejiahe">
-  <div class="atmosphere" aria-hidden="true">
-    <canvas #starfield class="starfield"></canvas>
-    <div class="nebula nebula-one"></div>
-    <div class="nebula nebula-two"></div>
-    <div class="horizon"></div>
-    <div class="scanlines"></div>
+  <div class="landscape" aria-hidden="true">
+    <div class="morning-sky"></div>
+    <div class="far-hills hill-a"></div>
+    <div class="far-hills hill-b"></div>
+    <div class="lake"></div>
+    <div class="lake-shimmer"></div>
+    <div class="lake-mist mist-a"></div>
+    <div class="lake-mist mist-b"></div>
+    <canvas #sceneCanvas class="scene-canvas"></canvas>
   </div>
 
   <header class="topbar">
-    <a class="brand" href="#" aria-label="桃花岛星河导航首页">
+    <a class="brand" href="#" aria-label="桃花岛导航首页">
       <span class="brand-mark">桃</span>
       <span class="brand-copy">
         <strong>桃花岛</strong>
-        <small>STARLIGHT PORTAL</small>
+        <small>PEACH BLOSSOM ISLE</small>
       </span>
     </a>
     <nav class="top-actions" aria-label="快捷操作">
-      <button class="ghost-button" type="button" (click)="launchRandom()">随机漫游</button>
-      <a class="primary-button" href="#catalog">开启探索</a>
+      <button class="ghost-button" type="button" (click)="launchRandom()">随风漫游</button>
+      <a class="primary-button" href="#catalog">入岛寻址</a>
     </nav>
   </header>
 
@@ -26,17 +29,17 @@
       <div class="hero-copy">
         <div class="eyebrow">
           <span class="pulse-dot"></span>
-          桃花岛数字秘境已开启
+          春水初生，桃花正盛
         </div>
         <h1>
-          驶入
-          <span class="gradient-word">星河</span>
+          一岛
+          <span class="gradient-word">桃花</span>
           <br />
-          发现你的下一座岛
+          藏尽人间去处
         </h1>
         <p class="intro">
-          一片会呼吸的导航宇宙，收录开发、设计、影音、学习与灵感站点。
-          在流光桃瓣之间，快速抵达你真正需要的地方。
+          水岸花枝之间，收纳你原本珍藏的每一个网址。
+          沿着桃林小径搜索、筛选，去往熟悉而需要的地方。
         </p>
 
         <label class="search-box" aria-label="搜索导航站点">
@@ -45,13 +48,13 @@
             type="search"
             [value]="searchTerm"
             (input)="search($event)"
-            placeholder="搜索站点、简介、分类或网址..."
+            placeholder="在桃林中寻找网址、简介或分类..."
             autocomplete="off"
           />
           <button *ngIf="searchTerm" type="button" (click)="clearSearch()">清除</button>
         </label>
 
-        <div class="hero-filters" aria-label="热门主题">
+        <div class="hero-filters" aria-label="常用分类">
           <button
             type="button"
             *ngFor="let section of sections.slice(0, 6)"
@@ -63,40 +66,69 @@
         </div>
       </div>
 
-      <div class="hero-orbit" aria-hidden="true">
-        <div class="orbital-ring ring-a"></div>
-        <div class="orbital-ring ring-b"></div>
-        <div class="moon">
-          <span>桃</span>
+      <div class="island-vista" aria-hidden="true">
+        <div class="sun-disc"></div>
+        <div class="reflection"></div>
+        <div class="islet">
+          <div class="shore-stones"></div>
+          <div class="grass-bank"></div>
+          <div class="orchard orchard-one"></div>
+          <div class="orchard orchard-two"></div>
+          <div class="orchard orchard-three"></div>
+          <div class="peach-tree">
+            <div class="trunk">
+              <i class="branch branch-one"></i>
+              <i class="branch branch-two"></i>
+              <i class="branch branch-three"></i>
+            </div>
+            <div class="blossom-crown" (pointermove)="releasePetals($event)">
+              <span class="bloom bloom-one"></span>
+              <span class="bloom bloom-two"></span>
+              <span class="bloom bloom-three"></span>
+              <span class="bloom bloom-four"></span>
+              <span class="bloom bloom-five"></span>
+              <span class="bloom bloom-six"></span>
+              <span class="bloom bloom-seven"></span>
+              <span class="bloom bloom-eight"></span>
+              <span class="bloom bloom-nine"></span>
+            </div>
+          </div>
+          <div class="peach-tree tree-small">
+            <div class="trunk"></div>
+            <div class="blossom-crown" (pointermove)="releasePetals($event)">
+              <span class="bloom bloom-two"></span>
+              <span class="bloom bloom-four"></span>
+              <span class="bloom bloom-six"></span>
+            </div>
+          </div>
+          <div class="stone-path"><i></i><i></i><i></i></div>
         </div>
-        <div class="satellite satellite-a">DEV</div>
-        <div class="satellite satellite-b">ART</div>
-        <div class="satellite satellite-c">IDEA</div>
+        <p class="hover-hint">轻拂桃花，花瓣会落入春水</p>
       </div>
     </section>
 
     <section class="metrics" aria-label="导航数据">
       <article>
         <strong>{{ totalLinks }}</strong>
-        <span>精选网址</span>
+        <span>原藏网址</span>
       </article>
       <article>
         <strong>{{ sections.length }}</strong>
-        <span>探索主题</span>
+        <span>桃林分径</span>
       </article>
       <article>
         <strong>{{ totalCollections }}</strong>
-        <span>内容星群</span>
+        <span>收藏花圃</span>
       </article>
       <article class="live-metric">
         <strong>{{ currentTime | date: 'HH:mm' }}</strong>
-        <span>岛上时间</span>
+        <span>岛上时辰</span>
       </article>
     </section>
 
     <section class="catalog" id="catalog">
       <aside class="category-panel">
-        <div class="panel-label">航线坐标</div>
+        <div class="panel-label">岛上花径</div>
         <button
           type="button"
           [class.active]="activeSection === allSections"
@@ -119,10 +151,10 @@
       <div class="destination-panel">
         <div class="results-heading">
           <div>
-            <p>当前航线</p>
+            <p>当前花径</p>
             <h2>{{ activeSection }} <span>{{ matchingCount }} 个站点</span></h2>
           </div>
-          <button class="surprise" type="button" (click)="launchRandom()">遇见惊喜</button>
+          <button class="surprise" type="button" (click)="launchRandom()">随风一游</button>
         </div>
 
         <div class="channels" *ngIf="channels.length > 1" aria-label="二级分类">
@@ -157,7 +189,7 @@
                 <h3>{{ site.name }}</h3>
                 <span class="arrow">↗</span>
               </div>
-              <p>{{ site.desc || '抵达新的灵感坐标。' }}</p>
+              <p>{{ site.desc || '沿桃林小径抵达此处。' }}</p>
               <div class="site-path">{{ site.section }} / {{ site.channel }}</div>
             </a>
             <div class="mirrors" *ngIf="site.mirrors.length">
@@ -175,9 +207,9 @@
 
         <ng-template #emptyState>
           <div class="empty-state">
-            <span>✦</span>
-            <h3>这片星域暂时没有结果</h3>
-            <p>换一个关键词，或回到全部航线继续漫游。</p>
+            <span>花</span>
+            <h3>这片桃林没有找到结果</h3>
+            <p>换一个关键词，或沿主径看看全部原藏网址。</p>
             <button type="button" (click)="resetFilters()">查看全部网址</button>
           </div>
         </ng-template>
@@ -188,7 +220,7 @@
           *ngIf="matchingCount > visibleLinks.length"
           (click)="showMore()"
         >
-          展开更多坐标
+          沿花径继续探寻
           <small>{{ visibleLinks.length }} / {{ matchingCount }}</small>
         </button>
       </div>
@@ -196,7 +228,7 @@
   </main>
 
   <footer class="portal-footer">
-    <span>TAOHUA DAO / 星河导航</span>
-    <p>在 {{ totalLinks }} 个目的地之间，持续发现新的灵感。</p>
+    <span>TAOHUA DAO / 桃花深处有人家</span>
+    <p>{{ totalLinks }} 个原藏目的地，未增添新的导航网址。</p>
   </footer>
 </div>
